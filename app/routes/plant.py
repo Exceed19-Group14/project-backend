@@ -11,6 +11,9 @@ from typing import List, Union
 PLANT_COLLECTION = "plant"
 
 
+PLANT_COLLECTION = "plant"
+
+
 router = APIRouter(
     prefix='/plant'
 )
@@ -38,7 +41,8 @@ class PlantModel(BaseModel):
     targeted_moisture: int
     targeted_light: int
     force_water: ForceWaterEnum
-    
+
+
 class CreatePlant(BaseModel):
     name: str
     date: datetime
@@ -59,4 +63,4 @@ def create_plant(dbo: CreatePlant):
     plant_collection.insert_one(
         dbo.dict()
     )
-    
+
