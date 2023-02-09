@@ -42,7 +42,7 @@ def show_plants():
     return {"msg": "there are 3 plants"}
 
 
-@router.post('/plant')
+@router.post('/')
 def create_plant(dbo: PlantModel):
     """add new plant into the database"""
     plant_collection.insert_one({
