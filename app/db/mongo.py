@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+import pymongo
 from dotenv import load_dotenv
 from os import getenv
 
@@ -16,3 +17,6 @@ except:
     print("Unable to connect MongoDB")
 
 db = client.get_database(MONGO_DB)
+
+board_collection = db.get_collection('boards')
+plant_collection = db.get_collection('plants')
