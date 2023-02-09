@@ -5,7 +5,10 @@ from enum import IntEnum
 from typing import List
 
 
-router = APIRouter(
+plant_router = APIRouter(
     prefix='/plant'
 )
 
+@plant_router.get('/')
+def show_plants():
+    return {"msg": "there are 3 plants"}
