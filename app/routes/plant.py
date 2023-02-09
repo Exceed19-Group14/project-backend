@@ -5,6 +5,9 @@ from enum import IntEnum
 from typing import List
 
 
+COLLECTION_NAME = "plant"
+
+
 plant_router = APIRouter(
     prefix='/plant'
 )
