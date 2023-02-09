@@ -3,13 +3,13 @@ from pydantic import BaseModel
 from app.routes.board import BoardModel
 from app.db.mongo import db, plant_collection
 from enum import IntEnum
-from typing import List
+from typing import List, Union
 
 
 PLANT_COLLECTION = "plant"
 
 
-plant_router = APIRouter(
+router = APIRouter(
     prefix='/plant'
 )
 
@@ -25,7 +25,7 @@ class ForceWaterEnum(IntEnum):
     
     
 class PlantModel(BaseModel):
-    board: BoardModel
+    board: Union[BoardModel, None]
     name: str
     mode: ModeEnum
     moisture: int
@@ -37,12 +37,12 @@ class PlantModel(BaseModel):
     force_water: ForceWaterEnum
     
 
-@plant_router.get('/')
+@router.get('/')
 def show_plants():
     return {"msg": "there are 3 plants"}
 
 
-@plant_router.post('/plant')
+@router.post('/plant')
 def create_plant(dbo: PlantModel):
     """add new plant into the database"""
     plant_collection.insert_one({
