@@ -5,7 +5,7 @@ from enum import IntEnum
 from typing import List
 
 
-COLLECTION_NAME = "plant"
+PLANT_COLLECTION = "plant"
 
 
 plant_router = APIRouter(
@@ -38,3 +38,12 @@ class PlantModel(BaseModel):
 @plant_router.get('/')
 def show_plants():
     return {"msg": "there are 3 plants"}
+
+
+@plant_router.post('/plant')
+def create_plant(dbo: PlantModel):
+    """add new plant into the database"""
+    db.get_collection(PLANT_COLLECTION).insert_one({
+        dbo.dict()
+    })
+    
