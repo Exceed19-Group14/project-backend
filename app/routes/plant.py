@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status
 from pydantic import BaseModel
-from app.db.mongo import db
+from app.routes.board import BoardModel
+from app.db.mongo import db, plant_collection
 from enum import IntEnum
 from typing import List
 
@@ -24,6 +25,7 @@ class ForceWaterEnum(IntEnum):
     
     
 class PlantModel(BaseModel):
+    board: BoardModel
     name: str
     mode: ModeEnum
     moisture: int
@@ -43,7 +45,7 @@ def show_plants():
 @plant_router.post('/plant')
 def create_plant(dbo: PlantModel):
     """add new plant into the database"""
-    db.get_collection(PLANT_COLLECTION).insert_one({
+    plant_collection.insert_one({
         dbo.dict()
     })
     
