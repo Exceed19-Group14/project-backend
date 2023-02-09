@@ -48,7 +48,7 @@ def show_plants():
     return {"msg": "there are 3 plants"}
 
 
-@plant_router.post('/plant')
+@plant_router.post('/plant', status_code=status.HTTP_201_CREATED)
 def create_plant(dbo: PlantModel):
     """add new plant into the database"""
     plant_collection.insert_one({
