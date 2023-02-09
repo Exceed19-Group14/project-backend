@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.board import router as BoardRouter
+from app.routes.plant import plant_router as PlantRouter
+
 
 app = FastAPI()
 
@@ -12,6 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(PlantRouter) # add /plant path
 
 app.include_router(BoardRouter)
 

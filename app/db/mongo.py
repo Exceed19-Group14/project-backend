@@ -19,3 +19,4 @@ except:
 db = client.get_database(MONGO_DB)
 
 board_collection = db.get_collection('boards')
+plant_collection = db.get_collection('plants')
