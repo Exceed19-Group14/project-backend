@@ -48,8 +48,14 @@ class UpdateModeAuto(BaseModel):
 
 class UpdateModeManual(BaseModel):
     mode: ModeEnum
-    
+    watering_time: int  # in miliseconds
 
+
+class WaterStatusResponse(BaseModel):
+    water_status: ForceWaterEnum
+    duration: Union[int, None]  # in miliseconds
+  
+  
 class PlantModel(BaseModel):
     plant_id: int
     id: PydanticObjectId = Field(default_factory=PydanticObjectId, alias='_id')
@@ -79,8 +85,8 @@ class CreatePlant(BaseModel):
     targeted_temperature: Union[float, None] = None
     targeted_moisture: Union[int, None] = None
     targeted_light: Union[int, None] = None
+   
 
-    
 @router.get('/', response_model=List[PlantModel])
 def show_plants():
     return list(plant_collection.find({}))
@@ -145,7 +151,7 @@ def unregister_plant(id: int):
 
 
 @plant_router.get('/{id}/water')
-def get_water_command(id: int) -> int:
+def get_water_command(id: int) -> WaterStatusResponse:
     doc = plant_collection.find_one({
         "board": id
     })
@@ -156,13 +162,16 @@ def get_water_command(id: int) -> int:
                 "details": "Not found"
             }
         })
-
+    dto = WaterStatusResponse(
+        water_status=ForceWaterEnum.active, duration=doc['watering_time'])
     if doc['mode'] == ModeEnum.auto:
-        # TODOS Condition to watering some plant
-        pass
+        if doc['targeted_temperature'] > doc['temperature']:
+            return dto
+        if doc['targeted_moisture'] > doc['moisture']:
+            return dto
+        if doc['targeted_light'] > doc['light']:
+            return dto
     else:
         if doc['force_water'] == ForceWaterEnum.active:
-            return 1
-        else:
-            return 0
-    return 0
+            return dto
+    return WaterStatusResponse(water_status=ForceWaterEnum.inactive, duration=None)
