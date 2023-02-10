@@ -63,7 +63,7 @@ def create_plant(dbo: PlantModel):
 
 
 @plant_router.get('/{id}/water')
-def get_water_command(id: int) -> int:
+def get_water_command(id: int) -> WaterStatusResponse:
     doc = plant_collection.find_one({
         "board": id
     })
