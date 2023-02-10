@@ -7,6 +7,7 @@ from bson.objectid import ObjectId
 from enum import IntEnum
 from datetime import datetime
 from typing import List, Union, Optional
+from bson import ObjectId
 
 PLANT_COLLECTION = "plant"
 
@@ -14,6 +15,16 @@ PLANT_COLLECTION = "plant"
 router = APIRouter(
     prefix='/plant'
 )
+
+
+def get_object_id(id: str) -> ObjectId:
+    try:
+        return ObjectId(id)
+    except:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, {
+            "errors": "Invalid ObjectId"
+        }
+        )
 
 
 class ModeEnum(IntEnum):
@@ -58,7 +69,7 @@ class WaterStatusResponse(BaseModel):
 
 
 class PlantModel(BaseModel):
-    id: PydanticObjectId = Field(default_factory=PydanticObjectId, alias='_id')
+    id: Optional[int] = Field(alias='_id')
     board: Union[None, int]
     plant_date: datetime
     name: str
@@ -97,7 +108,10 @@ def show_plants():
 @router.post('/', status_code=status.HTTP_201_CREATED, tags=["frontend"])
 def create_plant(dbo: CreatePlant):
     """add new plant into the database"""
+    count = plant_collection.count_documents({})
     doc = PlantModel(**dbo.dict()).dict()
+    doc.pop('id')
+    doc['_id'] = count+1
     plant_collection.insert_one(doc)
 
 
@@ -105,7 +119,7 @@ def create_plant(dbo: CreatePlant):
             response_model=PlantModel, tags=["frontend"])
 def get_plant(id: int):
     """get a specify plant info by plant id"""
-    plant = plant_collection.find_one({"plant_id": id})
+    plant = plant_collection.find_one({"_id": id})
     if plant is not None:
         return plant
     raise HTTPException(
@@ -122,28 +136,29 @@ def patch_hardware(board_id: int, dto: PatchPlant):
 
 
 @router.patch('/{id}/mode/auto', tags=["frontend"])
-def update_mode(id: int, dbo: UpdateModeAuto):
+def update_mode(id: str, dbo: UpdateModeAuto):
     plant_collection.update_one(
-        {"plant_id": id}, {"$set": dbo.dict()}
+        {"_id": id}, {"$set": dbo.dict()}
     )
 
 
 @router.patch('/{id}/mode/manual', tags=["frontend"])
-def update_mode(id: int, dbo: UpdateModeManual):
+def update_mode(id: str, dbo: UpdateModeManual):
+
     plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
+        {"_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
 
 
 @router.patch('/{id}/water', tags=["frontend"])
-def patch_water(id: int, status: ForceWaterEnum):
+def patch_water(id: str, status: ForceWaterEnum):
     plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"force_water": status}})
+        {"_id": id}, {"$set": {"force_water": status}})
 
 
 @router.put('/{id}/unregister', tags=["frontend"])
-def unregister_plant(id: int):
+def unregister_plant(id: str):
     plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"board": None}})
+        {"id": id}, {"$set": {"board": None}})
 
 
 @ router.get('/{id}/water', tags=["frontend", "hardware"])
