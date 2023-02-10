@@ -19,4 +19,6 @@ except:
 db = client.get_database(MONGO_DB)
 
 board_collection = db.get_collection('boards')
+board_collection.create_index('board_id', unique=True)
 plant_collection = db.get_collection('plants')
+plant_collection.create_index('plant_id', unique=True)
