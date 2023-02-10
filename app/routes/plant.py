@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, HTTPException
 from pydantic import BaseModel, Field
 from app.routes.board import BoardModel
 from app.db.mongo import db, plant_collection, board_collection
@@ -7,9 +7,6 @@ from bson.objectid import ObjectId
 from enum import IntEnum
 from datetime import datetime
 from typing import List, Union
-
-
-PLANT_COLLECTION = "plant"
 
 
 PLANT_COLLECTION = "plant"
@@ -63,3 +60,17 @@ def show_plants():
 def create_plant(dbo: CreatePlant):
     """add new plant into the database"""
     plant_collection.insert_one(dbo.dict())
+    
+
+@router.get('/{id}', status_code=status.HTTP_200_OK, response_model=PlantModel)
+def get_plant(id: int):
+    """get a specify plant info by board id"""
+    plant = plant_collection.find_one({"board": id})
+    if plant is not None:
+        return plant
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, 
+        detail=f"Plant with board ID {id} not found"
+    )
+
+
