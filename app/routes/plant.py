@@ -58,7 +58,6 @@ class WaterStatusResponse(BaseModel):
 
 
 class PlantModel(BaseModel):
-    plant_id: int
     id: PydanticObjectId = Field(default_factory=PydanticObjectId, alias='_id')
     board: Union[None, int]
     plant_date: datetime
@@ -82,11 +81,11 @@ class PlantModel(BaseModel):
 
 class CreatePlant(BaseModel):
     board: Union[int, None] = None
-    plant_id: int
     name: str
     plant_date: datetime
-    plant_image: int
-    # in secs
+    plant_image: Optional[int] = 1
+    targeted_moisture: Union[int, None] = 500
+    targeted_light: Union[int, None] = 700
 
 
 @router.get('/', response_model=List[PlantModel], tags=["frontend"])
