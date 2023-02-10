@@ -77,7 +77,7 @@ class PlantModel(BaseModel):
     targeted_moisture: Union[int, None] = None
     targeted_light: Union[int, None] = None
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
-    watering_time: int  # in secs
+    watering_time: int | None = None  # in secs
 
     def find_board(self):
         return BoardModel(**board_collection.find_one({
