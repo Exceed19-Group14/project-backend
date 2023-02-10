@@ -84,8 +84,9 @@ class CreatePlant(BaseModel):
     name: str
     plant_date: datetime
     plant_image: Optional[int] = 1
-    targeted_moisture: Union[int, None] = 500
-    targeted_light: Union[int, None] = 700
+    targeted_temperature: int
+    targeted_moisture: int
+    targeted_light: int
 
 
 @router.get('/', response_model=List[PlantModel], tags=["frontend"])
