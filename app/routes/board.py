@@ -5,6 +5,7 @@ from app.db.mongo import board_collection
 import pymongo
 from typing import List
 
+
 router = APIRouter(
     prefix='/board'
 )
@@ -19,12 +20,12 @@ class CreateBoardDto(BaseModel):
     board_id: int
 
 
-@router.get('/', response_model=List[BoardModel])
+@router.get('/', response_model=List[BoardModel], tags=["frontend"])
 def get_boards():
     docs = list(board_collection.find({}))
     return docs
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('/', status_code=status.HTTP_201_CREATED, tags=["frontend"])
 def create_board(dto: CreateBoardDto):
     board_collection.insert_one(dto.dict())
