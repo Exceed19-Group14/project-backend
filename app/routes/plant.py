@@ -69,7 +69,7 @@ class PlantModel(BaseModel):
     board: Union[None, int]
     plant_date: datetime
     name: str
-    mode: ModeEnum
+    mode: Optional[ModeEnum] = ModeEnum.auto
     moisture: Union[int, None] = None
     temperature: Union[float, None] = None
     light: Union[int, None] = None
@@ -90,7 +90,6 @@ class CreatePlant(BaseModel):
     plant_id: int
     name: str
     plant_date: datetime
-    mode: ModeEnum
     # in secs
 
 
