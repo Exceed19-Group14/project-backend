@@ -2,8 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.board import router as BoardRouter
 from app.routes.plant import router as PlantRouter
-from app.routes.plant import plant_router as PlantRouter
-
 
 
 app = FastAPI()
