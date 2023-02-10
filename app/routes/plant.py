@@ -104,18 +104,19 @@ class CreatePlant(BaseModel):
         return v
 
 
-@router.get('/', response_model=List[PlantModel])
+@router.get('/', response_model=List[PlantModel], tags=["frontend"])
 def show_plants():
     return list(plant_collection.find({}))
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('/', status_code=status.HTTP_201_CREATED, tags=["frontend"])
 def create_plant(dbo: CreatePlant):
     """add new plant into the database"""
     plant_collection.insert_one(dbo.dict())
 
 
-@router.get('/{id}', status_code=status.HTTP_200_OK, response_model=PlantModel)
+@router.get('/{id}', status_code=status.HTTP_200_OK,
+            response_model=PlantModel, tags=["frontend"])
 def get_plant(id: int):
     """get a specify plant info by board id"""
     plant = plant_collection.find_one({"plant_id": id})
@@ -127,47 +128,47 @@ def get_plant(id: int):
     )
 
 
-@router.put('/{id}/moisture')
+@router.put('/{id}/moisture', tags=["hardware"])
 def update_moisture(id: int, dbo: UpdateMoisture):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": {"moisture": dbo.dict().get('moisture')}}
     )
 
 
-@router.put('/{id}/temperature')
+@router.put('/{id}/temperature', tags=["hardware"])
 def update_temperature(id: int, dbo: UpdateTemperature):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": {"temperature": dbo.dict().get('temperature')}}
     )
 
 
-@router.put('/{id}/light')
+@router.put('/{id}/light', tags=["hardware"])
 def update_light(id: int, dbo: UpdateLight):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": {"light": dbo.dict().get('light')}}
     )
 
 
-@router.put('/{id}/mode/auto')
+@router.put('/{id}/mode/auto', tags=["frontend"])
 def update_mode(id: int, dbo: UpdateModeAuto):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": dbo.dict()}
     )
 
 
-@router.put('/{id}/mode/manual')
+@router.put('/{id}/mode/manual', tags=["frontend"])
 def update_mode(id: int, dbo: UpdateModeManual):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
 
 
-@router.put('/{id}/unregister')
+@router.put('/{id}/unregister', tags=["frontend"])
 def unregister_plant(id: int):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": {"board": None}})
 
 
-@router.get('/{id}/water')
+@router.get('/{id}/water', tags=["frontend", "hardware"])
 def get_water_command(id: int) -> WaterStatusResponse:
     doc = plant_collection.find_one({
         "board": id

@@ -6,7 +6,16 @@ from app.routes.board import router as BoardRouter
 from app.routes.plant import router as PlantRouter
 
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "frontend"
+    },
+    {
+        "name": "hardware"
+    }
+]
+
+app = FastAPI(openapi_tags=tags_metadata)
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,7 +40,7 @@ def validation_expection_handler(request, exc):
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Backend plant management system"}
 
 
 def custom_openapi():
