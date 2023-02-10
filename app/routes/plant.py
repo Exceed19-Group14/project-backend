@@ -6,8 +6,7 @@ from app.utils.objectid import PydanticObjectId
 from bson.objectid import ObjectId
 from enum import IntEnum
 from datetime import datetime
-from typing import List, Union
-
+from typing import List, Union, Optional
 
 PLANT_COLLECTION = "plant"
 
@@ -27,15 +26,9 @@ class ForceWaterEnum(IntEnum):
     inactive = 0
 
 
-class UpdateMoisture(BaseModel):
+class PatchPlant(BaseModel):
     moisture: int
-
-
-class UpdateTemperature(BaseModel):
     temperature: float
-
-
-class UpdateLight(BaseModel):
     light: int
 
 
@@ -70,15 +63,16 @@ class PlantModel(BaseModel):
     board: Union[None, int]
     plant_date: datetime
     name: str
-    mode: ModeEnum
+    mode: Optional[ModeEnum] = ModeEnum.auto
     moisture: Union[int, None] = None
     temperature: Union[float, None] = None
     light: Union[int, None] = None
-    targeted_temperature: Union[int, None] = None
-    targeted_moisture: Union[int, None] = None
-    targeted_light: Union[int, None] = None
+    targeted_temperature: Union[int, None] = 35.2
+    targeted_moisture: Union[int, None] = 500
+    targeted_light: Union[int, None] = 700
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
-    watering_time: Union[int, None] = None  # in secs
+    watering_time: Optional[int] = 30000  # in millisec
+    plant_image: int
 
     def find_board(self):
         return BoardModel(**board_collection.find_one({
@@ -87,22 +81,12 @@ class PlantModel(BaseModel):
 
 
 class CreatePlant(BaseModel):
-    board: int
+    board: Union[int, None] = None
     plant_id: int
     name: str
-    date: datetime
-    mode: ModeEnum
-    targeted_temperature: Union[float, None] = None
-    targeted_moisture: Union[int, None] = None
-    targeted_light: Union[int, None] = None
-
-    @validator('targeted_light')
-    def validateLight(cls, v):
-        if v is None:
-            return v
-        if v < 0 or v > 4095:
-            raise ValueError('Light must be between 0 and 4095')
-        return v
+    plant_date: datetime
+    plant_image: int
+    # in secs
 
 
 @router.get('/', response_model=List[PlantModel], tags=["frontend"])
@@ -113,13 +97,14 @@ def show_plants():
 @router.post('/', status_code=status.HTTP_201_CREATED, tags=["frontend"])
 def create_plant(dbo: CreatePlant):
     """add new plant into the database"""
-    plant_collection.insert_one(dbo.dict())
+    doc = PlantModel(**dbo.dict()).dict()
+    plant_collection.insert_one(doc)
 
 
 @router.get('/{id}', status_code=status.HTTP_200_OK,
             response_model=PlantModel, tags=["frontend"])
 def get_plant(id: int):
-    """get a specify plant info by board id"""
+    """get a specify plant info by plant id"""
     plant = plant_collection.find_one({"plant_id": id})
     if plant is not None:
         return plant
@@ -129,38 +114,30 @@ def get_plant(id: int):
     )
 
 
-@router.put('/{id}/moisture', tags=["hardware"])
-def update_moisture(id: int, dbo: UpdateMoisture):
+@router.patch('/{board_id}', tags=['hardware'])
+def patch_hardware(board_id: int, dto: PatchPlant):
     plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"moisture": dbo.dict().get('moisture')}}
+        {"board": board_id}, {"$set": dto.dict()}
     )
 
 
-@router.put('/{id}/temperature', tags=["hardware"])
-def update_temperature(id: int, dbo: UpdateTemperature):
-    plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"temperature": dbo.dict().get('temperature')}}
-    )
-
-
-@router.put('/{id}/light', tags=["hardware"])
-def update_light(id: int, dbo: UpdateLight):
-    plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"light": dbo.dict().get('light')}}
-    )
-
-
-@router.put('/{id}/mode/auto', tags=["frontend"])
+@router.patch('/{id}/mode/auto', tags=["frontend"])
 def update_mode(id: int, dbo: UpdateModeAuto):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": dbo.dict()}
     )
 
 
-@router.put('/{id}/mode/manual', tags=["frontend"])
+@router.patch('/{id}/mode/manual', tags=["frontend"])
 def update_mode(id: int, dbo: UpdateModeManual):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
+
+
+@router.patch('/{id}/water', tags=["frontend"])
+def patch_water(id: int, status: ForceWaterEnum):
+    plant_collection.update_one(
+        {"plant_id": id}, {"$set": {"force_water": status}})
 
 
 @router.put('/{id}/unregister', tags=["frontend"])
@@ -169,7 +146,7 @@ def unregister_plant(id: int):
         {"plant_id": id}, {"$set": {"board": None}})
 
 
-@router.get('/{id}/water', tags=["frontend", "hardware"])
+@ router.get('/{id}/water', tags=["frontend", "hardware"])
 def get_water_command(id: int) -> WaterStatusResponse:
     doc = plant_collection.find_one({
         "board": id
@@ -184,11 +161,11 @@ def get_water_command(id: int) -> WaterStatusResponse:
     dto = WaterStatusResponse(
         water_status=ForceWaterEnum.active, duration=doc['watering_time'])
     if doc['mode'] == ModeEnum.auto:
-        if doc['targeted_temperature'] > doc['temperature']:
+        if not doc['temperature'] is None and doc['targeted_temperature'] > doc['temperature']:
             return dto
-        if doc['targeted_moisture'] > doc['moisture']:
+        if not doc['moisture'] is None and doc['targeted_moisture'] > doc['moisture']:
             return dto
-        if doc['targeted_light'] > doc['light']:
+        if not doc['light'] is None and doc['targeted_light'] > doc['light']:
             return dto
     else:
         if doc['force_water'] == ForceWaterEnum.active:
