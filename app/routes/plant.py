@@ -6,8 +6,7 @@ from app.utils.objectid import PydanticObjectId
 from bson.objectid import ObjectId
 from enum import IntEnum
 from datetime import datetime
-from typing import List, Union
-
+from typing import List, Union, Optional
 
 PLANT_COLLECTION = "plant"
 
@@ -78,7 +77,7 @@ class PlantModel(BaseModel):
     targeted_moisture: Union[int, None] = None
     targeted_light: Union[int, None] = None
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
-    watering_time: Union[int, None] = None  # in secs
+    watering_time: Optional[int] = 30000  # in millisec
 
     def find_board(self):
         return BoardModel(**board_collection.find_one({
@@ -87,22 +86,12 @@ class PlantModel(BaseModel):
 
 
 class CreatePlant(BaseModel):
-    board: int
+    board: Union[int, None] = None
     plant_id: int
     name: str
-    date: datetime
+    plant_date: datetime
     mode: ModeEnum
-    targeted_temperature: Union[float, None] = None
-    targeted_moisture: Union[int, None] = None
-    targeted_light: Union[int, None] = None
-
-    @validator('targeted_light')
-    def validateLight(cls, v):
-        if v is None:
-            return v
-        if v < 0 or v > 4095:
-            raise ValueError('Light must be between 0 and 4095')
-        return v
+    # in secs
 
 
 @router.get('/', response_model=List[PlantModel], tags=["frontend"])
@@ -113,7 +102,8 @@ def show_plants():
 @router.post('/', status_code=status.HTTP_201_CREATED, tags=["frontend"])
 def create_plant(dbo: CreatePlant):
     """add new plant into the database"""
-    plant_collection.insert_one(dbo.dict())
+    doc = PlantModel(**dbo.dict()).dict()
+    plant_collection.insert_one(doc)
 
 
 @router.get('/{id}', status_code=status.HTTP_200_OK,
