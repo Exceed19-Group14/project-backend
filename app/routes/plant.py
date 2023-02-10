@@ -27,15 +27,9 @@ class ForceWaterEnum(IntEnum):
     inactive = 0
 
 
-class UpdateMoisture(BaseModel):
+class UpdateFromSensors(BaseModel):
     moisture: int
-
-
-class UpdateTemperature(BaseModel):
     temperature: float
-
-
-class UpdateLight(BaseModel):
     light: int
 
 
@@ -68,6 +62,7 @@ class PlantModel(BaseModel):
     plant_id: int
     id: PydanticObjectId = Field(default_factory=PydanticObjectId, alias='_id')
     board: Union[None, int]
+    plant_date: datetime
     name: str
     mode: ModeEnum
     moisture: Union[int, None] = None
@@ -77,7 +72,8 @@ class PlantModel(BaseModel):
     targeted_moisture: Union[int, None] = None
     targeted_light: Union[int, None] = None
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
-    watering_time: int  # in secs
+    watering_time: Union[int, None] = None  # in secs
+
 
     def find_board(self):
         return BoardModel(**board_collection.find_one({
@@ -128,25 +124,28 @@ def get_plant(id: int):
     )
 
 
-@router.put('/{id}/moisture', tags=["hardware"])
-def update_moisture(id: int, dbo: UpdateMoisture):
-    plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"moisture": dbo.dict().get('moisture')}}
-    )
+@router.put('/{id}/update_from_sensors', tags=["hardware"])
+def update_from_sensors(id: int, dbo: UpdateFromSensors):
+    plant_collection.update_one({"plant_id": id}, {"$set": dbo.dict()})
+# @router.put('/{id}/moisture', tags=["hardware"])
+# def update_moisture(id: int, dbo: UpdateMoisture):
+#     plant_collection.update_one(
+#         {"plant_id": id}, {"$set": {"moisture": dbo.dict().get('moisture')}}
+#     )
 
 
-@router.put('/{id}/temperature', tags=["hardware"])
-def update_temperature(id: int, dbo: UpdateTemperature):
-    plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"temperature": dbo.dict().get('temperature')}}
-    )
+# @router.put('/{id}/temperature', tags=["hardware"])
+# def update_temperature(id: int, dbo: UpdateTemperature):
+#     plant_collection.update_one(
+#         {"plant_id": id}, {"$set": {"temperature": dbo.dict().get('temperature')}}
+#     )
 
 
-@router.put('/{id}/light', tags=["hardware"])
-def update_light(id: int, dbo: UpdateLight):
-    plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"light": dbo.dict().get('light')}}
-    )
+# @router.put('/{id}/light', tags=["hardware"])
+# def update_light(id: int, dbo: UpdateLight):
+#     plant_collection.update_one(
+#         {"plant_id": id}, {"$set": {"light": dbo.dict().get('light')}}
+#     )
 
 
 @router.put('/{id}/mode/auto', tags=["frontend"])
