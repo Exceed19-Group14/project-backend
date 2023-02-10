@@ -26,15 +26,9 @@ class ForceWaterEnum(IntEnum):
     inactive = 0
 
 
-class UpdateMoisture(BaseModel):
+class PatchPlant(BaseModel):
     moisture: int
-
-
-class UpdateTemperature(BaseModel):
     temperature: float
-
-
-class UpdateLight(BaseModel):
     light: int
 
 
@@ -78,6 +72,7 @@ class PlantModel(BaseModel):
     targeted_light: Union[int, None] = None
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
     watering_time: Optional[int] = 30000  # in millisec
+    plant_image: int
 
     def find_board(self):
         return BoardModel(**board_collection.find_one({
@@ -118,38 +113,30 @@ def get_plant(id: int):
     )
 
 
-@router.put('/{id}/moisture', tags=["hardware"])
-def update_moisture(id: int, dbo: UpdateMoisture):
+@router.patch('/{board_id}', tags=['hardware'])
+def patch_hardware(board_id: int, dto: PatchPlant):
     plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"moisture": dbo.dict().get('moisture')}}
+        {"board": board_id}, {"$set": dto.dict()}
     )
 
 
-@router.put('/{id}/temperature', tags=["hardware"])
-def update_temperature(id: int, dbo: UpdateTemperature):
-    plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"temperature": dbo.dict().get('temperature')}}
-    )
-
-
-@router.put('/{id}/light', tags=["hardware"])
-def update_light(id: int, dbo: UpdateLight):
-    plant_collection.update_one(
-        {"plant_id": id}, {"$set": {"light": dbo.dict().get('light')}}
-    )
-
-
-@router.put('/{id}/mode/auto', tags=["frontend"])
+@router.patch('/{id}/mode/auto', tags=["frontend"])
 def update_mode(id: int, dbo: UpdateModeAuto):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": dbo.dict()}
     )
 
 
-@router.put('/{id}/mode/manual', tags=["frontend"])
+@router.patch('/{id}/mode/manual', tags=["frontend"])
 def update_mode(id: int, dbo: UpdateModeManual):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
+
+
+@router.patch('/{id}/water', tags=["frontend"])
+def patch_water(id: int, status: ForceWaterEnum):
+    plant_collection.update_one(
+        {"plant_id": id}, {"$set": {"force_water": status}})
 
 
 @router.put('/{id}/unregister', tags=["frontend"])
@@ -158,7 +145,7 @@ def unregister_plant(id: int):
         {"plant_id": id}, {"$set": {"board": None}})
 
 
-@router.get('/{id}/water', tags=["frontend", "hardware"])
+@ router.get('/{id}/water', tags=["frontend", "hardware"])
 def get_water_command(id: int) -> WaterStatusResponse:
     doc = plant_collection.find_one({
         "board": id
