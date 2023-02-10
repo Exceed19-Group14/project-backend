@@ -1,11 +1,21 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.board import router as BoardRouter
 from app.routes.plant import router as PlantRouter
 
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "frontend"
+    },
+    {
+        "name": "hardware"
+    }
+]
+
+app = FastAPI(openapi_tags=tags_metadata)
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,9 +30,17 @@ app.include_router(PlantRouter)  # add /plant path
 app.include_router(BoardRouter)
 
 
+@app.exception_handler(ValueError)
+def validation_expection_handler(request, exc):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"message": f"Validation Error: {exc}"}
+    )
+
+
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Backend plant management system"}
 
 
 def custom_openapi():
