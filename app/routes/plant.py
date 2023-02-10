@@ -44,11 +44,11 @@ class UpdateModeAuto(BaseModel):
     targeted_temperature: float
     targeted_moisture: int
     targeted_light: int
-    
+  
 
 class UpdateModeManual(BaseModel):
     mode: ModeEnum
-
+    
 
 class PlantModel(BaseModel):
     plant_id: int
@@ -63,7 +63,12 @@ class PlantModel(BaseModel):
     targeted_moisture: Union[int, None] = None
     targeted_light: Union[int, None] = None
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
-
+    watering_time: int # in secs
+    
+    def find_board(self):
+        self.board = board_collection.find_one({
+            "board": self.board
+        })
 
 class CreatePlant(BaseModel):
     board: int
@@ -137,3 +142,27 @@ def update_mode(id: int, dbo: UpdateModeManual):
 def unregister_plant(id: int):
     plant_collection.update_one(
         {"plant_id": id}, {"$set": {"board": None}})
+
+
+@plant_router.get('/{id}/water')
+def get_water_command(id: int) -> int:
+    doc = plant_collection.find_one({
+        "board": id
+    })
+
+    if doc is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, {
+            "error": {
+                "details": "Not found"
+            }
+        })
+
+    if doc['mode'] == ModeEnum.auto:
+        # TODOS Condition to watering some plant
+        pass
+    else:
+        if doc['force_water'] == ForceWaterEnum.active:
+            return 1
+        else:
+            return 0
+    return 0
