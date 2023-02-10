@@ -67,9 +67,9 @@ class PlantModel(BaseModel):
     moisture: Union[int, None] = None
     temperature: Union[float, None] = None
     light: Union[int, None] = None
-    targeted_temperature: Union[int, None] = None
-    targeted_moisture: Union[int, None] = None
-    targeted_light: Union[int, None] = None
+    targeted_temperature: Union[int, None] = 35.2
+    targeted_moisture: Union[int, None] = 500
+    targeted_light: Union[int, None] = 700
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
     watering_time: Optional[int] = 30000  # in millisec
     plant_image: int
@@ -85,6 +85,7 @@ class CreatePlant(BaseModel):
     plant_id: int
     name: str
     plant_date: datetime
+    plant_image: int
     # in secs
 
 
@@ -103,7 +104,7 @@ def create_plant(dbo: CreatePlant):
 @router.get('/{id}', status_code=status.HTTP_200_OK,
             response_model=PlantModel, tags=["frontend"])
 def get_plant(id: int):
-    """get a specify plant info by board id"""
+    """get a specify plant info by plant id"""
     plant = plant_collection.find_one({"plant_id": id})
     if plant is not None:
         return plant
@@ -160,11 +161,11 @@ def get_water_command(id: int) -> WaterStatusResponse:
     dto = WaterStatusResponse(
         water_status=ForceWaterEnum.active, duration=doc['watering_time'])
     if doc['mode'] == ModeEnum.auto:
-        if doc['targeted_temperature'] > doc['temperature']:
+        if not doc['temperature'] is None and doc['targeted_temperature'] > doc['temperature']:
             return dto
-        if doc['targeted_moisture'] > doc['moisture']:
+        if not doc['moisture'] is None and doc['targeted_moisture'] > doc['moisture']:
             return dto
-        if doc['targeted_light'] > doc['light']:
+        if not doc['light'] is None and doc['targeted_light'] > doc['light']:
             return dto
     else:
         if doc['force_water'] == ForceWaterEnum.active:
