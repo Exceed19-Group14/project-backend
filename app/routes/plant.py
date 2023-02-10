@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from app.routes.board import BoardModel
 from app.db.mongo import db, plant_collection, board_collection
 from app.utils.objectid import PydanticObjectId
@@ -25,7 +25,7 @@ class ModeEnum(IntEnum):
 class ForceWaterEnum(IntEnum):
     active = 1
     inactive = 0
-    
+
 
 class UpdateMoisture(BaseModel):
     moisture: int
@@ -33,7 +33,7 @@ class UpdateMoisture(BaseModel):
 
 class UpdateTemperature(BaseModel):
     temperature: float
-    
+
 
 class UpdateLight(BaseModel):
     light: int
@@ -44,7 +44,15 @@ class UpdateModeAuto(BaseModel):
     targeted_temperature: float
     targeted_moisture: int
     targeted_light: int
-  
+
+    @validator('targeted_light')
+    def validateLight(cls, v):
+        if v is None:
+            return v
+        if v < 0 or v > 4095:
+            raise ValueError('Light must be between 0 and 4095')
+        return v
+
 
 class UpdateModeManual(BaseModel):
     mode: ModeEnum
@@ -54,8 +62,8 @@ class UpdateModeManual(BaseModel):
 class WaterStatusResponse(BaseModel):
     water_status: ForceWaterEnum
     duration: Union[int, None]  # in miliseconds
-  
-  
+
+
 class PlantModel(BaseModel):
     plant_id: int
     id: PydanticObjectId = Field(default_factory=PydanticObjectId, alias='_id')
@@ -69,12 +77,13 @@ class PlantModel(BaseModel):
     targeted_moisture: Union[int, None] = None
     targeted_light: Union[int, None] = None
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
-    watering_time: int # in secs
-    
+    watering_time: int  # in secs
+
     def find_board(self):
-        self.board = board_collection.find_one({
+        return BoardModel(**board_collection.find_one({
             "board": self.board
-        })
+        }))
+
 
 class CreatePlant(BaseModel):
     board: int
@@ -85,7 +94,15 @@ class CreatePlant(BaseModel):
     targeted_temperature: Union[float, None] = None
     targeted_moisture: Union[int, None] = None
     targeted_light: Union[int, None] = None
-   
+
+    @validator('targeted_light')
+    def validateLight(cls, v):
+        if v is None:
+            return v
+        if v < 0 or v > 4095:
+            raise ValueError('Light must be between 0 and 4095')
+        return v
+
 
 @router.get('/', response_model=List[PlantModel])
 def show_plants():
@@ -96,7 +113,7 @@ def show_plants():
 def create_plant(dbo: CreatePlant):
     """add new plant into the database"""
     plant_collection.insert_one(dbo.dict())
-    
+
 
 @router.get('/{id}', status_code=status.HTTP_200_OK, response_model=PlantModel)
 def get_plant(id: int):
@@ -105,43 +122,43 @@ def get_plant(id: int):
     if plant is not None:
         return plant
     raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, 
+        status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Plant with ID {id} not found"
     )
-    
+
 
 @router.put('/{id}/moisture')
 def update_moisture(id: int, dbo: UpdateMoisture):
     plant_collection.update_one(
-            {"plant_id": id}, {"$set": {"moisture": dbo.dict().get('moisture')}}
-        )
-    
+        {"plant_id": id}, {"$set": {"moisture": dbo.dict().get('moisture')}}
+    )
+
 
 @router.put('/{id}/temperature')
 def update_temperature(id: int, dbo: UpdateTemperature):
     plant_collection.update_one(
-            {"plant_id": id}, {"$set": {"temperature": dbo.dict().get('temperature')}}
-        )
+        {"plant_id": id}, {"$set": {"temperature": dbo.dict().get('temperature')}}
+    )
 
 
 @router.put('/{id}/light')
 def update_light(id: int, dbo: UpdateLight):
-        plant_collection.update_one(
-            {"plant_id": id}, {"$set": {"light": dbo.dict().get('light')}}
-        )
+    plant_collection.update_one(
+        {"plant_id": id}, {"$set": {"light": dbo.dict().get('light')}}
+    )
 
 
 @router.put('/{id}/mode/auto')
 def update_mode(id: int, dbo: UpdateModeAuto):
     plant_collection.update_one(
-            {"plant_id": id}, {"$set": dbo.dict()}
-        )
+        {"plant_id": id}, {"$set": dbo.dict()}
+    )
 
 
 @router.put('/{id}/mode/manual')
 def update_mode(id: int, dbo: UpdateModeManual):
     plant_collection.update_one(
-            {"plant_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
+        {"plant_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
 
 
 @router.put('/{id}/unregister')
