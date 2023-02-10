@@ -25,6 +25,7 @@ class ForceWaterEnum(IntEnum):
 
 
 class PlantModel(BaseModel):
+
     board: Union[BoardModel, int, None] = None
     name: str
     mode: ModeEnum
@@ -35,12 +36,17 @@ class PlantModel(BaseModel):
     targeted_moisture: int
     targeted_light: int
     force_water: ForceWaterEnum
-    watering_time: int  # in secs
+    watering_time: int  # in miliseconds
 
     def find_board(self):
         self.board = board_collection.find_one({
             "board": self.board
         })
+
+
+class WaterStatusResponse(BaseModel):
+    water_status: ForceWaterEnum
+    duration: Union[int, None]  # in miliseconds
 
 
 @plant_router.get('/')
@@ -57,7 +63,7 @@ def create_plant(dbo: PlantModel):
 
 
 @plant_router.get('/{id}/water')
-def get_water_command(id: int) -> int:
+def get_water_command(id: int) -> WaterStatusResponse:
     doc = plant_collection.find_one({
         "board": id
     })
@@ -68,13 +74,16 @@ def get_water_command(id: int) -> int:
                 "details": "Not found"
             }
         })
-
+    dto = WaterStatusResponse(
+        water_status=ForceWaterEnum.active, duration=doc['watering_time'])
     if doc['mode'] == ModeEnum.auto:
-        # TODOS Condition to watering some plant
-        pass
+        if doc['targeted_temperature'] > doc['temperature']:
+            return dto
+        if doc['targeted_moisture'] > doc['moisture']:
+            return dto
+        if doc['targeted_light'] > doc['light']:
+            return dto
     else:
         if doc['force_water'] == ForceWaterEnum.active:
-            return 1
-        else:
-            return 0
-    return 0
+            return dto
+    return WaterStatusResponse(water_status=ForceWaterEnum.inactive, duration=None)
