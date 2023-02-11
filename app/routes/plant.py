@@ -37,6 +37,10 @@ class UpdateMode(BaseModel):
     mode: ModeEnum
 
 
+class UpdateForceWater(BaseModel):
+    mode: ForceWaterEnum
+    
+
 class WaterStatusResponse(BaseModel):
     water_status: ForceWaterEnum
     duration: Union[int, None]  # in miliseconds
