@@ -38,7 +38,7 @@ class UpdateMode(BaseModel):
 
 
 class UpdateForceWater(BaseModel):
-    activeness: ForceWaterEnum
+    mode: ForceWaterEnum
     
 
 class WaterStatusResponse(BaseModel):
@@ -134,9 +134,9 @@ def update_plant_info(id: int, dto: UpdatePlant):
 
 
 @router.patch('/{id}/water', tags=["frontend"], status_code=status.HTTP_204_NO_CONTENT)
-def patch_water(id: int, dto: UpdateForceWater):
+def patch_water(id: int, dto: UpdateMode):
     plant_collection.update_one(
-        {"_id": id}, {"$set": {"force_water": dto.activeness}})
+        {"_id": id}, {"$set": {"force_water": dto.mode}})
 
 
 @router.put('/{id}/unregister', tags=["frontend"], status_code=status.HTTP_204_NO_CONTENT)
