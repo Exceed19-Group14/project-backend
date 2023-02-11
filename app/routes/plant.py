@@ -158,7 +158,10 @@ def patch_water(id: int, status: ForceWaterEnum):
 @router.put('/{id}/unregister', tags=["frontend"])
 def unregister_plant(id: int):
     plant_collection.update_one(
-        {"_id": id}, {"$set": {"board": None}})
+        {"_id": id}, {"$set": {"board": None, 
+                               "moisture": None,
+                               "temperature": None,
+                               "light": None}})
 
 
 @ router.get('/{board_id}/water', tags=["hardware"])
