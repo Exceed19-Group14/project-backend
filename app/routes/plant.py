@@ -161,7 +161,7 @@ def unregister_plant(id: str):
         {"id": id}, {"$set": {"board": None}})
 
 
-@ router.get('/{id}/water', tags=["frontend", "hardware"])
+@router.get('/{board_id}/water', tags=["hardware"])
 def get_water_command(id: int) -> WaterStatusResponse:
     doc = plant_collection.find_one({
         "board": id
@@ -186,3 +186,12 @@ def get_water_command(id: int) -> WaterStatusResponse:
         if doc['force_water'] == ForceWaterEnum.active:
             return dto
     return WaterStatusResponse(water_status=ForceWaterEnum.inactive, duration=None)
+
+
+@router.patch('/{board_id}/water/stop', tags=["hardware"], description="Stop watering when complete duration")
+def patch_stop_water(board_id: int):
+    plant_collection.update_one({
+        "board": board_id
+    }, {"$set": {
+        "force_water": ForceWaterEnum.inactive
+    }})
