@@ -55,7 +55,7 @@ class PlantModel(BaseModel):
     targeted_moisture: Union[int, None] = 500
     targeted_light: Union[int, None] = 700
     force_water: ForceWaterEnum = ForceWaterEnum.inactive
-    watering_time: Optional[int] = 30000  # in millisec
+    watering_time: Optional[int] = 5000  # in millisec
     plant_image: int
 
     def find_board(self):
@@ -72,6 +72,7 @@ class CreatePlant(BaseModel):
     targeted_temperature: int
     targeted_moisture: int
     targeted_light: int
+    watering_time: Optional[int] = 5000  # in millisec
 
 
 class UpdatePlant(BaseModel):
@@ -79,6 +80,7 @@ class UpdatePlant(BaseModel):
     targeted_temperature: int
     targeted_moisture: int
     targeted_light: int
+    watering_time: int  # in millisec
 
 
 @router.get('/', response_model=List[PlantModel], tags=["frontend"])
@@ -161,7 +163,7 @@ def get_water_command(board_id: int) -> WaterStatusResponse:
     if doc['mode'] == ModeEnum.auto:
         if not doc['temperature'] is None and doc['targeted_temperature'] < doc['temperature']:
             return dto
-        if not doc['moisture'] is None and doc['targeted_moisture'] > doc['moisture']:
+        if not doc['moisture'] is None and doc['targeted_moisture'] < doc['moisture']:
             return dto
     else:
         if doc['force_water'] == ForceWaterEnum.active:
