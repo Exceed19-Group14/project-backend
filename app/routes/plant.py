@@ -136,29 +136,29 @@ def patch_hardware(board_id: int, dto: PatchPlant):
 
 
 @router.patch('/{id}/mode/auto', tags=["frontend"])
-def update_mode(id: str, dbo: UpdateModeAuto):
+def update_mode(id: int, dbo: UpdateModeAuto):
     plant_collection.update_one(
         {"_id": id}, {"$set": dbo.dict()}
     )
 
 
 @router.patch('/{id}/mode/manual', tags=["frontend"])
-def update_mode(id: str, dbo: UpdateModeManual):
+def update_mode(id: int, dbo: UpdateModeManual):
 
     plant_collection.update_one(
         {"_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
 
 
 @router.patch('/{id}/water', tags=["frontend"])
-def patch_water(id: str, status: ForceWaterEnum):
+def patch_water(id: int, status: ForceWaterEnum):
     plant_collection.update_one(
         {"_id": id}, {"$set": {"force_water": status}})
 
 
 @router.put('/{id}/unregister', tags=["frontend"])
-def unregister_plant(id: str):
+def unregister_plant(id: int):
     plant_collection.update_one(
-        {"id": id}, {"$set": {"board": None}})
+        {"_id": id}, {"$set": {"board": None}})
 
 
 @ router.get('/{board_id}/water', tags=["hardware"])
