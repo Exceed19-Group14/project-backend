@@ -109,19 +109,19 @@ def get_plant(id: int):
     )
 
 
-@router.patch('/{board_id}', tags=['hardware'])
+@router.patch('/{board_id}', tags=['hardware'], status_code=status.HTTP_204_NO_CONTENT)
 def patch_hardware(board_id: int, dto: PatchPlant):
     plant_collection.update_one(
         {"board": board_id}, {"$set": dto.dict()}
     )
 
 
-@router.patch('/{id}/mode', tags=["frontend"])
+@router.patch('/{id}/mode', tags=["frontend"], status_code=status.HTTP_204_NO_CONTENT)
 def update_mode(id: int, dto: UpdateMode):
     plant_collection.update_one({"_id": id}, {"$set": {"mode": dto.mode}})
 
 
-@router.patch('/{id}', tags=['frontend'], description='Update plant info')
+@router.patch('/{id}', tags=['frontend'], description='Update plant info', status_code=status.HTTP_204_NO_CONTENT)
 def update_plant_info(id: int, dto: UpdatePlant):
     data = dto.dict(exclude_none=True)
     plant_collection.update_one({
@@ -129,13 +129,13 @@ def update_plant_info(id: int, dto: UpdatePlant):
     }, data)
 
 
-@router.patch('/{id}/water', tags=["frontend"])
+@router.patch('/{id}/water', tags=["frontend"], status_code=status.HTTP_204_NO_CONTENT)
 def patch_water(id: int, status: ForceWaterEnum):
     plant_collection.update_one(
         {"_id": id}, {"$set": {"force_water": status}})
 
 
-@router.put('/{id}/unregister', tags=["frontend"])
+@router.put('/{id}/unregister', tags=["frontend"], status_code=status.HTTP_204_NO_CONTENT)
 def unregister_plant(id: int):
     plant_collection.update_one(
         {"_id": id}, {"$set": {"board": None,
@@ -171,10 +171,15 @@ def get_water_command(board_id: int) -> WaterStatusResponse:
     return WaterStatusResponse(water_status=ForceWaterEnum.inactive, duration=None)
 
 
-@ router.patch('/{board_id}/water/stop', tags=["hardware"], description="Stop watering when complete duration")
+@ router.patch('/{board_id}/water/stop', tags=["hardware"], description="Stop watering when complete duration", status_code=status.HTTP_204_NO_CONTENT)
 def patch_stop_water(board_id: int):
     plant_collection.update_one({
         "board": board_id
     }, {"$set": {
         "force_water": ForceWaterEnum.inactive
     }})
+
+
+@router.delete('/{id}', tags=['frontend'], status_code=status.HTTP_204_NO_CONTENT)
+def delete_plant(id: int):
+    plant_collection.delete_one({"_id": id})
