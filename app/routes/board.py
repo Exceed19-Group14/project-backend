@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, HTTPException
 from pydantic import BaseModel, Field
 from app.utils.objectid import PydanticObjectId
 from app.db.mongo import board_collection
@@ -28,4 +28,10 @@ def get_boards():
 
 @router.post('/', status_code=status.HTTP_201_CREATED, tags=["frontend"])
 def create_board(dto: CreateBoardDto):
-    board_collection.insert_one(dto.dict())
+    try:
+        board_collection.insert_one(dto.dict())
+    except pymongo.errors.DuplicateKeyError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Board with ID {dto.board_id} already exists"
+        )

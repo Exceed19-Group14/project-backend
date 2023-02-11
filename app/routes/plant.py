@@ -85,6 +85,15 @@ class UpdatePlant(BaseModel):
     watering_time: int  # in millisec
 
 
+class PatchBoard(BaseModel):
+    board: int
+
+
+def validate_board(board: int):
+    count = plant_collection.count_documents({"board": board})
+    return count == 0
+
+
 @router.get('/', response_model=List[PlantModel], tags=["frontend"])
 def show_plants():
     return list(plant_collection.find({}))
@@ -93,6 +102,11 @@ def show_plants():
 @router.post('/', status_code=status.HTTP_201_CREATED, tags=["frontend"])
 def create_plant(dbo: CreatePlant):
     """add new plant into the database"""
+    if dbo.board and validate_board(dbo.board) is False:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Board {dbo.board} is already in use"
+        )
     count = plant_collection.count_documents({})
     doc = PlantModel(**dbo.dict()).dict()
     doc.pop('id')
@@ -187,3 +201,17 @@ def patch_stop_water(board_id: int):
 @router.delete('/{id}', tags=['frontend'], status_code=status.HTTP_204_NO_CONTENT)
 def delete_plant(id: int):
     plant_collection.delete_one({"_id": id})
+
+
+@router.patch('/{id}/board', tags=['frontend'], status_code=status.HTTP_204_NO_CONTENT)
+def patch_board(id: int, dto: PatchBoard):
+    if validate_board(dto.board) is False:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Board {dto.board} is already in use"
+        )
+    plant_collection.update_one({
+        "_id": id,
+    }, {"$set": {
+        "board": dto.board
+    }})
