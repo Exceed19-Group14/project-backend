@@ -161,10 +161,10 @@ def unregister_plant(id: str):
         {"id": id}, {"$set": {"board": None}})
 
 
-@router.get('/{board_id}/water', tags=["hardware"])
-def get_water_command(id: int) -> WaterStatusResponse:
+@ router.get('/{board_id}/water', tags=["hardware"])
+def get_water_command(board_id: int) -> WaterStatusResponse:
     doc = plant_collection.find_one({
-        "board": id
+        "board": board_id
     })
 
     if doc is None:
