@@ -125,7 +125,7 @@ def update_mode(id: int, dto: UpdateMode):
     plant_collection.update_one({"_id": id}, {"$set": {"mode": dto.mode}})
 
 
-@router.patch('/{id}', tags=['frontend'], description='Update plant info', status_code=status.HTTP_204_NO_CONTENT)
+@router.put('/{id}', tags=['frontend'], description='Update plant info', status_code=status.HTTP_204_NO_CONTENT)
 def update_plant_info(id: int, dto: UpdatePlant):
     data = dto.dict(exclude_none=True)
     plant_collection.update_one({
