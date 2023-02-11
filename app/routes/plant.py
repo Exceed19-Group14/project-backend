@@ -131,7 +131,7 @@ def update_plant_info(id: int, dto: UpdatePlant):
     plant_collection.update_one({
         {"_id": id}
     }, {
-        "$set": dto.dict()
+        "$set": data
     })
 
 
