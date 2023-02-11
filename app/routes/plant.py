@@ -129,7 +129,7 @@ def update_mode(id: int, dto: UpdateMode):
 def update_plant_info(id: int, dto: UpdatePlant):
     data = dto.dict(exclude_none=True)
     plant_collection.update_one({
-        {"_id": id}
+        "_id": id
     }, {
         "$set": data
     })
