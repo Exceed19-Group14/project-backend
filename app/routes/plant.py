@@ -130,9 +130,9 @@ def update_plant_info(id: int, dto: UpdatePlant):
 
 
 @router.patch('/{id}/water', tags=["frontend"], status_code=status.HTTP_204_NO_CONTENT)
-def patch_water(id: int, status: ForceWaterEnum):
+def patch_water(id: int, dto: UpdateMode):
     plant_collection.update_one(
-        {"_id": id}, {"$set": {"force_water": status}})
+        {"_id": id}, {"$set": {"force_water": dto.mode}})
 
 
 @router.put('/{id}/unregister', tags=["frontend"], status_code=status.HTTP_204_NO_CONTENT)
@@ -159,11 +159,9 @@ def get_water_command(board_id: int) -> WaterStatusResponse:
     dto = WaterStatusResponse(
         water_status=ForceWaterEnum.active, duration=doc['watering_time'])
     if doc['mode'] == ModeEnum.auto:
-        if not doc['temperature'] is None and doc['targeted_temperature'] > doc['temperature']:
+        if not doc['temperature'] is None and doc['targeted_temperature'] < doc['temperature']:
             return dto
         if not doc['moisture'] is None and doc['targeted_moisture'] > doc['moisture']:
-            return dto
-        if not doc['light'] is None and doc['targeted_light'] > doc['light']:
             return dto
     else:
         if doc['force_water'] == ForceWaterEnum.active:
