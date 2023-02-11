@@ -7,6 +7,7 @@ from bson.objectid import ObjectId
 from enum import IntEnum
 from datetime import datetime
 from typing import List, Union, Optional
+import pymongo
 
 
 PLANT_COLLECTION = "plant"
@@ -90,8 +91,18 @@ class PatchBoard(BaseModel):
 
 
 def validate_board(board: int):
+    if board == 0:
+        return True
     count = plant_collection.count_documents({"board": board})
     return count == 0
+
+
+def get_seq_id():
+    counts = list(plant_collection.find({}, {"_id": True}).sort(
+        "_id", pymongo.DESCENDING).limit(1))
+    if len(counts) == 0:
+        return 1
+    return counts[0]['_id']+1
 
 
 @router.get('/', response_model=List[PlantModel], tags=["frontend"])
@@ -107,10 +118,10 @@ def create_plant(dbo: CreatePlant):
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Board {dbo.board} is already in use"
         )
-    count = plant_collection.count_documents({})
+
     doc = PlantModel(**dbo.dict()).dict()
     doc.pop('id')
-    doc['_id'] = count+1
+    doc['_id'] = get_seq_id()
     plant_collection.insert_one(doc)
 
 
