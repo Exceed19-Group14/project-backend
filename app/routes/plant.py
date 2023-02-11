@@ -39,7 +39,7 @@ class UpdateMode(BaseModel):
 
 class UpdateForceWater(BaseModel):
     mode: ForceWaterEnum
-    
+
 
 class WaterStatusResponse(BaseModel):
     water_status: ForceWaterEnum
@@ -80,10 +80,8 @@ class CreatePlant(BaseModel):
 
 
 class UpdatePlant(BaseModel):
-    name: str
     targeted_temperature: int
     targeted_moisture: int
-    targeted_light: int
     watering_time: int  # in millisec
 
 
