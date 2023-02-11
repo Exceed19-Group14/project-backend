@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 from enum import IntEnum
 from datetime import datetime
 from typing import List, Union, Optional
-from bson import ObjectId
+
 
 PLANT_COLLECTION = "plant"
 
@@ -15,16 +15,6 @@ PLANT_COLLECTION = "plant"
 router = APIRouter(
     prefix='/plant'
 )
-
-
-def get_object_id(id: str) -> ObjectId:
-    try:
-        return ObjectId(id)
-    except:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, {
-            "errors": "Invalid ObjectId"
-        }
-        )
 
 
 class ModeEnum(IntEnum):
@@ -43,24 +33,8 @@ class PatchPlant(BaseModel):
     light: int
 
 
-class UpdateModeAuto(BaseModel):
+class UpdateMode(BaseModel):
     mode: ModeEnum
-    targeted_temperature: float
-    targeted_moisture: int
-    targeted_light: int
-
-    @validator('targeted_light')
-    def validateLight(cls, v):
-        if v is None:
-            return v
-        if v < 0 or v > 4095:
-            raise ValueError('Light must be between 0 and 4095')
-        return v
-
-
-class UpdateModeManual(BaseModel):
-    mode: ModeEnum
-    watering_time: int  # in miliseconds
 
 
 class WaterStatusResponse(BaseModel):
@@ -95,6 +69,13 @@ class CreatePlant(BaseModel):
     name: str
     plant_date: datetime
     plant_image: Optional[int] = 1
+    targeted_temperature: int
+    targeted_moisture: int
+    targeted_light: int
+
+
+class UpdatePlant(BaseModel):
+    name: str
     targeted_temperature: int
     targeted_moisture: int
     targeted_light: int
@@ -135,18 +116,17 @@ def patch_hardware(board_id: int, dto: PatchPlant):
     )
 
 
-@router.patch('/{id}/mode/auto', tags=["frontend"])
-def update_mode(id: str, dbo: UpdateModeAuto):
-    plant_collection.update_one(
-        {"_id": id}, {"$set": dbo.dict()}
-    )
+@router.patch('/{id}/mode', tags=["frontend"])
+def update_mode(id: int, dto: UpdateMode):
+    plant_collection.update_one({"_id": id}, {"$set": {"mode": dto.mode}})
 
 
-@router.patch('/{id}/mode/manual', tags=["frontend"])
-def update_mode(id: str, dbo: UpdateModeManual):
-
-    plant_collection.update_one(
-        {"_id": id}, {"$set": {"mode": dbo.dict().get("mode")}})
+@router.patch('/{id}', tags=['frontend'], description='Update plant info')
+def update_plant_info(id: int, dto: UpdatePlant):
+    data = dto.dict(exclude_none=True)
+    plant_collection.update_one({
+        "_id": id
+    }, data)
 
 
 @router.patch('/{id}/water', tags=["frontend"])
@@ -188,7 +168,7 @@ def get_water_command(board_id: int) -> WaterStatusResponse:
     return WaterStatusResponse(water_status=ForceWaterEnum.inactive, duration=None)
 
 
-@router.patch('/{board_id}/water/stop', tags=["hardware"], description="Stop watering when complete duration")
+@ router.patch('/{board_id}/water/stop', tags=["hardware"], description="Stop watering when complete duration")
 def patch_stop_water(board_id: int):
     plant_collection.update_one({
         "board": board_id
