@@ -190,8 +190,8 @@ def get_water_command(board_id: int) -> WaterStatusResponse:
     dto = WaterStatusResponse(
         water_status=ForceWaterEnum.active, duration=doc['watering_time'])
     if doc['mode'] == ModeEnum.auto:
-        # if not doc['temperature'] is None and doc['targeted_temperature'] < doc['temperature']:
-        #     return dto
+        if not doc['temperature'] is None and doc['targeted_temperature'] < doc['temperature']:
+            return dto
         if not doc['moisture'] is None and doc['targeted_moisture'] < doc['moisture']:
             return dto
     else:
